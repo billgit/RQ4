@@ -1,0 +1,472 @@
+<!DOCTYPE HTML>
+
+<html>
+<head>
+
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+
+<title>Wealth Central Reporting</title>
+
+<!-- Load initial styles/js for non-grid work -->
+<link rel="stylesheet" type="text/css" href="css/slickgrid/slick.grid.css" media="screen" charset="utf-8" />
+<!--link rel="stylesheet" type="text/css" href="css/slickgrid/examples.css" media="screen" charset="utf-8" /-->
+
+<link rel="stylesheet" type="text/css" href="css/catapult-reporting_consolidated.css" media="all" />
+<link rel="stylesheet" type="text/css" href="css/reports.css" media="all" />
+
+<style type="text/css">
+a.groupingLink  { background-color:#eff5f9; }
+.grid-canvas	{ position:relative; outline:0; width:100%!important; }
+#myGrid			{ border-color:#ccc; border-top:none; }
+.slick-viewport { overflow-y:scroll!important; }
+
+a.active		{ font:bold 12px arial; color:#000!important; text-decoration:none; cursor:default; }
+</style>
+
+
+<script type="text/javascript">
+function popupWin() {
+testwindow = window.open("inquiryDetail.html", "editme", "location=0, status=0, toolbar=0, scrollbars=0, width=1082, height=500, resizable=1, left=90, top=50");
+} 
+
+function popupWin2() {
+testwindow = window.open("data_dictionary.html", "datadict", "location=0, status=0, toolbar=0, scrollbars=0, width=1082, height=740, resizable=1, left=90, top=50");
+} 
+
+function popupWin3() {
+testwindow = window.open("viewreport.html", "viewrpt", "location=0, status=0, toolbar=0, scrollbars=0, width=948, height=698, resizable=1, left=90, top=50");
+} 
+</script>
+
+</head>
+
+<body>
+
+<div id="pageContainer">
+<div class="grid-header" style="width:100%; margin-bottom:-3px!important; padding:0;">
+<table width="100%" cellspacing="0" cellpadding="0" style="margin:0; padding:0; margin-top:6px;">
+<tr><td align="left" style="margin:0; padding:0;"><label>Reports</label></td>
+<td align="right"><a href="#" title="Help"><img id="helpicon" src="images/help_noborder_final.png"></a></td></tr></table>
+</div>
+
+<div id="titleArea">
+<h1 class="titleofGrid"><a href="#" id="Favs" class="noDec">Favorites (17)</a> <span style="margin:0 5px; color:#aaa;">|</span><a href="#" id="myWork" class="active">My Work (40)</a> <span style="margin:0 5px; color:#aaa;">|</span> <a href="#" id="reportAdmin" class="noDec">Report Administration</a> <span style="margin:0 5px; color:#aaa;">|</span> <a href="#" id="FTP" class="noDec">FTP</a></h1>
+</div>
+
+<div class="iconArea" style="margin-right:10px; margin-bottom:4px;"><a id="dd" href="javascript:popupWin2()" class="noDec">Data Dictionary</a> <span style="margin:0 5px; color:#aaa;">|</span> <a id="newReport" href="#" class="noDec">New Report</a></div>
+
+<div id="filterBox" style="clear:both; height:28px; border:1px #ccc solid; background-color:#ecf1f7; width:99%; margin-bottom:2px;">
+<p style="margin:0 padding:0; margin-left:11px;"><span style="font:bold 12px arial; line-height:28px;">Report Type</span> <input id="cb1" type="checkbox" style="position:relative; top:2px; left:13px;"/><span style="padding-left:19px; font:normal 12px arial; line-height:28px;">Include Historical Reports</span> </p>
+</div>
+
+<div id="myGrid"></div>
+
+<!-- Expand/Collapse -->
+<div class="expcolLinks">
+<div id="expLink" onclick="expandAllGroups()"><a href="#" class="noDec">Expand All</a></div><span class="paginationPipe">|</span><div id="colLink" onclick="collapseAllGroups()"><a href="#" class="noDec">Collapse All</a></div>
+</div>
+
+</div>
+
+<!-- SlickGrid dependant files  -->
+<script language="javascript" src="js/jquery/jquery-1.4.3.min.js"></script>
+<script language="javascript" src="js/jquery/jquery-ui-1.8.5.custom.min.js"></script>
+<script language="javascript" src="js/jquery/jquery.event.drag-2.0.min.js"></script>
+<script language="javascript" src="js/slickgrid/slick.core.js"></script>
+<script language="javascript" src="js/slickgrid/plugins/slick.rowselectionmodel.js"></script>
+<script language="javascript" src="js/slickgrid/slick.grid.js"></script>
+<script language="javascript" src="js/slickgrid/slick.groupitemmetadataprovider.js"></script>
+<script language="javascript" src="js/slickgrid/slick.dataview.js"></script>
+<script language="javascript" src="js/slickgrid/slick.formatters.js"></script>
+<script language="javascript" src="js/slickgrid/slick.editors.js"></script>
+
+<!-- XXXXXXXXXXXXXXX jQ Date/Calendar XXXXXXXXXXXXX -->
+<script type="text/javascript" src="js/jquery-ui-1.8.11.custom.min.js"></script>
+
+<!-- XXXXXXXXXXXXXXX Modal blocker XXXXXXXXXXXXXX -->
+<script type="text/javascript" src="js/jquery.blockUI.js?v2.38"></script>
+<script language="JavaScript" src="js/popup.js"></script>
+
+
+<!-- XXXXXXXXXXXXXXXXXX Initialize Grid size to fit browser XXXXXXXXXXXXXXXXXXXX -->
+<script type="text/javascript">
+$(window).load(function() {
+	var remainingHeight = parseInt($(window).height() - 160);
+
+		if (remainingHeight < 100) {
+			remainingHeight = 100;
+		}
+	$('#myGrid').height(remainingHeight);
+		grid.resizeCanvas();
+});
+</script>
+
+<script type="text/javascript">
+$(function() {
+	// Help Icon MouseOver- 
+		$('#helpicon').hover(function() {
+				$(this).addClass('helpovr');
+			},
+			function() {
+				$(this).removeClass('helpovr');
+		});
+});
+</script>
+
+
+<script type="text/javascript">
+var dataView;
+var grid;
+var data = [];
+var favoritesdata = [];
+var rows = [];
+var initialSortOrder = {};
+var groups;
+
+var columns = [
+{id:"repName", name:"Report Name", field:"repName", ttip:"Report Name", width:300, resizable:false, sortable:true, selectable:false,  focusable:false, formatter:ReportNameCellFormatter, headerCssClass:"pad-24-left"},
+{id:"repDescr", name:" ", field:"repDescr", ttip:"Report Description", width:60, resizable:true, focusable:false, formatter:ReportDescr_CellFormatter},
+{id:"type", name:"Type", field:"type", ttip:"Report Type", width:110, sortable:true, focusable:false, cssClass:"pad-4-left"},
+{id:"subCatg", name:"Subject Area", field:"subCatg", ttip:"Subject Area", width:120, focusable:false, sortable:true, cssClass:"pad-4-left"},
+{id:"alert", name:"Alert", field:"alert", ttip:"Alert", width:60, sortable:true, focusable:false, formatter:AlertCellFormatter},
+{id:"schedule", name:"Schedule", field:"schedule", ttip:"Schedule", width:140, focusable:false, sortable:true, cssClass:"pad-4-left"},
+{id:"modDate", name:"Last Updated", field:"modDate", ttip:"Last Updated", width:110, focusable:false, sortable:true, cssClass:"pad-4-left", formatter:Slick.Formatters.ISODate},
+{id:"ftp", name:"FTP", field:"ftp", ttip:"FTP", width:60, focusable:false, sortable:true, cssClass:"pad-4-left", formatter:FTPFormatter},
+{id:"opFmt_CustDisp", name:"Output", field:"opFmt_CustDisp", ttip:"Output", width:80, focusable:false, sortable:true, cssClass:"pad-4-left"}
+];
+
+var options = {
+	enableCellNavigation:true,
+	editable:false,
+	sortable:true,
+	rowHeight:23
+};
+ 
+initialSortOrder.sortBy = "repName";
+initialSortOrder.sortDirection = "ASC";
+
+$(function() {
+data = [
+{id:1, catg:"Activity", repName:"ACH Detail", repDescr:" ", type:"Shared", subCatg:"Plan Instructions", alert:" ", schedule:"Annually - End of Yr", modDate:"10/12/2011", ftp:"check", opFmt_CustDisp:"Online"},
+{id:2, catg:"Activity", repName:"All Activity", repDescr:" ", type:"Shared", subCatg:"Plan Instructions", alert:" ", schedule:"Weekly - Sunday", modDate:"10/12/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:3, catg:"Activity", repName:"All Cashiering Activity", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Annually - End of Yr", modDate:"11/01/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:4, catg:"Activity", repName:"All Outstanding Checks", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:"T", schedule:"Monthly - 01", modDate:"01/19/2012", ftp:"", opFmt_CustDisp:"Online"},
+{id:5, catg:"Activity", repName:"Check Detail", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:"T", schedule:"Quarterly - End of Qtr", modDate:"12/19/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:6, catg:"Activity", repName:"Closeout Transfer", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"10/20/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:7, catg:"Activity", repName:"Commission Activity", repDescr:" ", type:"Personal", subCatg:"Holders", alert:" ", schedule:"Monthly - Brokerage", modDate:"10/14/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:8, catg:"Activity", repName:"Compliance & Controls Status", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Monthly - Brokerage", modDate:"10/20/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:9, catg:"Activity", repName:"Daily PIP/Online Activity", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Weekly - Sunday", modDate:"09/28/2011", ftp:"check", opFmt_CustDisp:"Online"},
+{id:10, catg:"Activity", repName:"Equity Trading Activity", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Daily - All days", modDate:"09/28/2011", ftp:"check", opFmt_CustDisp:"Online"},
+{id:11, catg:"Activity", repName:"Flexible Fees Activity", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:12, catg:"Activity", repName:"IBP Activity", repDescr:" ", type:"Shared", subCatg:"Plan Instructions", alert:" ", schedule:"Weekly - Sunday", modDate:"10/12/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:13, catg:"Activity", repName:"Internal Transfer Activity", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Annually - End of Yr", modDate:"11/01/2011",  opFmt_CustDisp:"Online"},
+{id:14, catg:"Activity", repName:"Journal Activity", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:"", schedule:"Monthly - 01", modDate:"01/19/2012", ftp:"", opFmt_CustDisp:"Online"},
+{id:15, catg:"Activity", repName:"LOI Activity", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:"T", schedule:"Quarterly - End of Qtr", modDate:"12/19/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:16, catg:"Activity", repName:"Mutual Fund Monitoring", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"10/20/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:17, catg:"Activity", repName:"Mutual Fund Trade Detail", repDescr:" ", type:"Personal", subCatg:"Holders", alert:" ", schedule:"Monthly - Brokerage", modDate:"10/14/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:18, catg:"Activity", repName:"Order Activity", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Monthly - Brokerage", modDate:"10/20/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:19, catg:"Activity", repName:"PIPS Weekly Activity by Rep and Account Number", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Weekly - Sunday", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:20, catg:"Activity", repName:"Plan Activity", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Daily - All days", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:21, catg:"Activity", repName:"Previous Day Receipts and Disbursements", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:22, catg:"Activity", repName:"Third Party Check", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Daily - All days", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:23, catg:"Activity", repName:"Trade Detail", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+
+{id:24, catg:"Client and Account Information", repName:"12OctReport", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Monthly - 01", modDate:"09/28/2011", ftp:"check", opFmt_CustDisp:"Online"},
+{id:25, catg:"Client and Account Information", repName:"12OctReport", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"Monthly - Brokerage", modDate:"09/28/2011", ftp:"check", opFmt_CustDisp:"Online"},
+{id:26, catg:"Client and Account Information", repName:"12OctReport", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:27, catg:"Client and Account Information", repName:"Account Modifications", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:28, catg:"Client and Account Information", repName:"Accounts with Restrictions", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:29, catg:"Client and Account Information", repName:"Closed Account", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:30, catg:"Client and Account Information", repName:"Daily Inserts", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011",  opFmt_CustDisp:"Online"},
+{id:31, catg:"Client and Account Information", repName:"E-Notification Failed Email", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:32, catg:"Client and Account Information", repName:"FSWP Additions/Changes", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:33, catg:"Client and Account Information", repName:"IRA Check Writing & Mandatory Withholding States by Rep", repDescr:" ", type:"Personal", subCatg:"Plan Instructions", alert:" ", schedule:"--", modDate:"09/28/2011", ftp:"", opFmt_CustDisp:"Online"},
+
+{id:34, catg:"Positions", repName:"Corporate Actions", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"--", modDate:"06/30/2011", ftp:"check", opFmt_CustDisp:"Online"},
+{id:35, catg:"Positions", repName:"Exercise Options", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Weekly - Friday", modDate:"01/12/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:36, catg:"Positions", repName:"Expiring Options", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"--", modDate:"03/23/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:37, catg:"Positions", repName:"Positions Search", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"--", modDate:"10/30/2010", ftp:"", opFmt_CustDisp:"Online"},
+{id:38, catg:"Positions", repName:"Top Equities", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"09/01/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:39, catg:"Positions", repName:"Top Mutual Funds", repDescr:" ", type:"Personal", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"07/04/2011", ftp:"", opFmt_CustDisp:"Online"},
+{id:40, catg:"Positions", repName:"Top Positions", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"06/30/2011", ftp:"", opFmt_CustDisp:"Online"}
+];
+
+
+favoritesdata = [
+{id:1, catg:"Activity", repName:"Positions Search", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"--", modDate:"10/30/2010", ftp:" ", opFmt_CustDisp:"Online"},
+{id:2, catg:"Activity", repName:"Top Equities", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"09/01/2011", ftp:" ", opFmt_CustDisp:"Online"},
+{id:3, catg:"Activity", repName:"Top Mutual Funds", repDescr:" ", type:"Personal", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"07/04/2011",  ftp:" ", opFmt_CustDisp:"Online"},
+{id:4, catg:"Activity", repName:"Positions Search", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"--", modDate:"10/30/2010",  ftp:" ", opFmt_CustDisp:"Online"},
+{id:5, catg:"Activity", repName:"Top Equities", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"09/01/2011", ftp:" ", opFmt_CustDisp:"Online"},
+{id:6, catg:"Activity", repName:"Positions Search", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"--", modDate:"10/30/2010",  ftp:" ", opFmt_CustDisp:"Online"},
+{id:7, catg:"Activity", repName:"Top Equities", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"09/01/2011", ftp:" ", opFmt_CustDisp:"Online"},
+{id:8, catg:"Activity", repName:"Top Mutual Funds", repDescr:" ", type:"Personal", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"07/04/2011",  ftp:" ", opFmt_CustDisp:"Online"},
+{id:9, catg:"Activity", repName:"Positions Search", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"--", modDate:"10/30/2010",  ftp:" ", opFmt_CustDisp:"Online"},
+{id:10, catg:"Activity", repName:"Top Equities", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"09/01/2011", ftp:" ", opFmt_CustDisp:"Online"},
+
+{id:11, catg:"Balances", repName:"Top Equities", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"09/01/2011", ftp:" ", opFmt_CustDisp:"Online"},
+
+{id:12, catg:"Client and Account Information", repName:"Top Equities", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"09/01/2011", ftp:" ", opFmt_CustDisp:"Online"},
+{id:13, catg:"Client and Account Information", repName:"Top Mutual Funds", repDescr:" ", type:"Personal", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"07/04/2011", ftp:" ", opFmt_CustDisp:"Online"},
+{id:14, catg:"Client and Account Information", repName:"Positions Search", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"--", modDate:"10/30/2010", ftp:" ", opFmt_CustDisp:"Online"},
+{id:15, catg:"Client and Account Information", repName:"Top Equities", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"09/01/2011", ftp:" ", opFmt_CustDisp:"Online"},
+
+{id:16, catg:"Orders", repName:"Top Equities", repDescr:" ", type:"Shared", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"09/01/2011", ftp:" ", opFmt_CustDisp:"Online"},
+{id:17, catg:"Orders", repName:"Top Mutual Funds", repDescr:" ", type:"Personal", subCatg:"Positions", alert:" ", schedule:"Daily - All Days", modDate:"07/04/2011", ftp:" ", opFmt_CustDisp:"Online"}
+];
+
+	var groupItemMetadataProvider = new Slick.Data.GroupItemMetadataProvider();
+	dataView = new Slick.Data.DataView({ groupItemMetadataProvider: groupItemMetadataProvider });
+
+	grid = new Slick.Grid($("#myGrid"), dataView, columns, options);
+
+  // Show the sort caret
+		var asc = initialSortOrder.sortDirection == 'ASC'? true:false;
+		grid.setSortColumn(initialSortOrder.sortBy, asc);
+
+// register the group item metadata provider to add expand/collapse group handlers
+	grid.registerPlugin(groupItemMetadataProvider);
+
+// wire up model events to drive the grid
+	dataView.onRowCountChanged.subscribe(function(e,args) {
+	grid.updateRowCount();
+	grid.render();
+	});
+ 
+	dataView.onRowsChanged.subscribe(function(e,args) {
+	grid.invalidateRows(args.rows);
+	grid.render();
+	});
+ 
+
+// Get x,y click position & check for Security ID column - flyout menu positioning
+	grid.onClick.subscribe(function(e, args) {
+		var cell = grid.getCellFromEvent(e);
+		var item = this.getDataItem(args.row);
+
+		if (grid.getColumns()[cell.cell].id == "repName") {
+			if(item && item instanceof Slick.Group && item.__group) {	// check for Group Header Row
+				$('slick-cell.active').css({'border-color':'#cccccc'});
+				$("#RCMenu").hide();
+				return false;
+			}
+			else {
+				getMenu(e.pageX, e.pageY);
+			}
+		}
+		else { 				// click anyplace else on the Grid to hide menu
+			$("#RCMenu").hide();
+		}
+    });
+
+// Help Icon - 
+	$('#helpicon').hover(function() {
+			this.src = 'images/helpovr.png';
+		},
+		function() {
+			this.src = 'images/help_noborder_final.png';
+	});
+
+
+/* Row Highlight-click - needs to be fixed for removeClass (clear row, multiple row selection/clear, ignore collapsed group headers, etc. */
+	$('div.slick-row').live('click', function(e,args) { 
+//		var anyCellofRow = $(this);
+			$('.slickRowHighlight').removeClass('slickRowHighlight');
+			$(this).children().addClass("slickRowHighlight");
+	});
+ 
+
+// Row Rollover - 
+	$('div.slick-row').live('mouseover mouseout', function(event) {
+		var ctx = $(this);
+		var eClassName = ctx.attr('class');
+		if (event.type == 'mouseover') {
+			setTimeout(function(){ctx.children().addClass("tableRowOver");}, 0);
+		}
+		else {
+			setTimeout(function(){ctx.children().removeClass("tableRowOver");}, 0);
+		}
+	});
+
+
+// Sort Func - local sort.  Not good algorithm - somewhat ignores decimal placement.
+// So that $98.900 is less than $948.320 but greater than $774.770
+	grid.onSort.subscribe(function(e, args) {
+	var sortdir = (args.sortAsc == 1) ? "A" : "D";
+	var sortcol = args.sortCol.field;
+ 	dataView.fastSort(sortcol, args.sortAsc);
+ 	});
+
+   	grid.setSelectionModel(new Slick.RowSelectionModel());
+
+// initialize the model after all the events have been hooked up
+	dataView.beginUpdate();
+	dataView.setItems(data);
+
+	dataView.groupBy(
+		"catg",
+		function (g) {
+			return "<span class='grouping' style='color:#333'>"+g.value+" ("+g.count+") <span style='margin:0 4px; color:#aaa;'>|</span> <a href='#' class='noDec groupingLink'>New</a></span>"
+		},
+		function (a, b) {
+			return a.value - b.value;
+		}
+	);
+
+
+/* Regroup func - not used here... no Groupby Filter
+$("#groupbySelect").change (function() {
+	var newGrouping = $(this).val();
+	if((newGrouping=="")||(newGrouping==null)||(newGrouping=="Account")) {
+		newGrouping="groups";
+	}
+	dataView.groupBy(
+		newGrouping,
+		function (g) {
+			return "<span class='grouping'>"+g.value+"</span>"
+		},
+		function (a, b) {
+			return a.value - b.value;
+		}
+	);
+});
+*/
+
+	dataView.endUpdate();
+
+
+
+// Initialize - collapse all groups
+	dataView.beginUpdate();
+	for (var i = 0; i < dataView.getGroups().length; i++) {
+		dataView.collapseGroup(dataView.getGroups()[i].value);
+	}
+	dataView.endUpdate();
+	$("#colLink a").addClass('inactive');
+		groups=i;	// Get initial # of group rows
+	});
+
+
+
+// ************************ Swap Grid Data ****************************
+	$('#Favs, #myWork, #reportAdmin').click(function() {
+		var link = $(this).attr('id');
+		if(link=="Favs") {
+			dataView.setItems(favoritesdata);
+		}
+		else {
+			dataView.setItems(data);
+		}
+		for (var i = 0; i < dataView.getGroups().length; i++) {
+			dataView.collapseGroup(dataView.getGroups()[i].value);
+		}
+		groups=i;	// Get # of group rows when data changed
+		grid.invalidate();
+		grid.render();
+		$('#Favs, #myWork, #reportAdmin').removeClass('active noDec');
+		$("#expLink a").removeClass('inactive');
+		$("#colLink a").addClass('inactive');
+		$('#'+link).addClass('active');
+		$('#'+link).blur();
+	});
+
+
+// Flyouts/menus
+	function getMenu(xPos, yPos) {
+		var Menu1 = document.getElementById('RCMenu');
+		var gridHeight = parseInt($(window).height() - 180);
+// Check for bottom edge of grid... reposition menu if too close
+		if(yPos > gridHeight) {
+			yPos = yPos-138;
+		}
+		Menu1.style.top = yPos+"px";
+		Menu1.style.left = xPos+"px";;
+		Menu1.style.display='inline';
+	}
+
+	function dumpMenu() {
+		var Menu1 = document.getElementById('RCMenu');
+	 	Menu1.style.display='none';
+	}
+
+	function stayOpen() {
+		var Menu1 = document.getElementById('RCMenu');
+		if(Menu1.style.display='inline') {
+			return;
+		}
+	} 
+
+
+// Transaction Detail image/window
+function getDetails() {
+popupWindow = window.open('detailsWin.html','popUpWindow','height=585,width=848,left=140,top=240,resizable=no,scrollbars=no,toolbar=no,menubar=no,location=no,directories=no,status=no');
+dumpMenu2();
+}
+
+// Expand/Collapse Groups - links at bottom
+	function collapseAllGroups() {
+		$("#colLink a").addClass('inactive');
+		$("#expLink a").removeClass('inactive');
+		dataView.beginUpdate();
+		for (var i = 0; i < dataView.getGroups().length; i++) {
+			dataView.collapseGroup(dataView.getGroups()[i].value);
+		}
+        dataView.endUpdate();
+	}
+ 
+	function expandAllGroups() {
+		$("#expLink a").addClass('inactive');
+		$("#colLink a").removeClass('inactive');
+		dataView.beginUpdate();
+		for (var i = 0; i < dataView.getGroups().length; i++) {
+			dataView.expandGroup(dataView.getGroups()[i].value);
+		}
+	dataView.endUpdate();
+	}
+
+
+	function dispExpSubMenu() {
+		$("#exportMenu").css('display', 'block');
+	}
+
+	function hideExpSubMenu(){
+   		$("#exportMenu").css('display', 'none');
+	}
+</script>
+
+<div id="RCMenu" onclick="dumpMenu()">
+<ul class="menu-class">
+<li onMouseOver="hideExpSubMenu()"><a href="javascript:popupWin3()" onclick="dumpMenu()">View</a></li>
+<li onMouseOver="hideExpSubMenu()"><a id="detail" href="javascript:popupWin()" onclick="dumpMenu()">Edit</a></li>
+<li onMouseOver="hideExpSubMenu()"><a href="#" onclick="dumpMenu()">View Historical Versions</a></li>
+<li onMouseOver="dispExpSubMenu()"><a href="#" onclick="dumpMenu()">Export &nbsp; <img src='images/arrow_right_black.png' width='11' height='11' hspace='0' vspace='0' border='0' align='texttop' style="margin-left:90px;"></a></li>
+<ul class="exportMenu menu-class" id="exportMenu" style="position:absolute; left:161px; top:70px;">
+	<li class="contextMenu_Li" data="excel"><a href="#" onclick="dumpMenu()">Excel</a></li>
+	<li class="contextMenu_Li" data="csv"><a href="#" onclick="dumpMenu()">CSV</a></li>
+	<li class="contextMenu_Li" data="excel"><a href="#" onclick="dumpMenu()">Text</a></li>
+	<li class="contextMenu_Li" data="csv"><a href="#" onclick="dumpMenu()">PDF</a></li>
+</ul>
+<li onMouseOver="hideExpSubMenu()"><a href="#" onclick="dumpMenu()">Delete</a></li>
+<li onMouseOver="hideExpSubMenu()"><a href="#" onclick="dumpMenu()">Manage Alert</a></li>
+<li onMouseOver="hideExpSubMenu()"><a href="#" onclick="dumpMenu()">Manage FTP</a></li>
+<li onMouseOver="hideExpSubMenu()"><a href="#" onclick="dumpMenu()">Add to Favorites</a></li>
+</ul>
+</div>
+
+
+<script type="text/javascript">
+$(window).resize(function() {
+	var remainingHeight = parseInt($(window).height() - 160);
+		if (remainingHeight < 100) {
+			remainingHeight = 100;
+		}
+	$('#myGrid').height(remainingHeight);
+		grid.resizeCanvas();
+});
+</script>
+
+</div>
+
+
+</body>
+</html>
